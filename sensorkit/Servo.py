@@ -38,7 +38,6 @@ class TowerProMG995(BaseServo):
         super(TowerProMG995, self).__init__(data_pin=data_pin, frequency=50)
         self.name = name
 
-
     def setup(initial_angle = 0):
         """Initializes the servo."""
         print("%s setting up.." % (self.name))
@@ -46,6 +45,8 @@ class TowerProMG995(BaseServo):
         self.angle_controller = io.PWM(self.data_pin, self.frequency)
         self.angle_controller.start(self.__calculate_duty(initial_angle))
         self._current_angle = initial_angle
+        self._is_ready = True
+        print("%s setup is completed." % (self.name))
 
     @property
     def angle(self):
@@ -53,6 +54,8 @@ class TowerProMG995(BaseServo):
 
     @angle.setter
     def angle(self, value):
+        if not self.is_ready():
+            raise RuntimeError("Servo is not ready! Please be sure about you called the setup method of class before.")
         if value > 180 or value < 0:
             raise ValueError("Angle value must be between 0 and 180")
         if isinstance(value, int):
@@ -63,12 +66,18 @@ class TowerProMG995(BaseServo):
         self._current_angle = value
 
 
-    def cleanup():
+    def cleanup(self):
         """Cleans up the pins taht used by servo.After called this method, if you want to start using the same servo you need to call setup method again."""
+        if not self.is_ready():
+            raise RuntimeWarning("You are trying to cleanup the servo that has not been setted up yet.")
+        self._is_ready = False
         self.angle_controller.stop()
         io.cleanup((self.data_pin))
         self._current_angle = 0
         self.angle_controller = None
+
+    def is_ready(self):
+        return self._is_ready;
 
 
     def __calculate_duty(self, angle):
