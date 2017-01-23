@@ -7,7 +7,7 @@ from sensorkit.UltrasonicHCSR04 import UltrasonicHCSR04
 import time
 import threading
 
-usensor = UltrasonicHCSR04(trig_pin = 27, echo_pin = 17, name = "Efsanevi Sensör")
+usensor = UltrasonicHCSR04(trig_pin = 17, echo_pin = 27, name = "Efsanevi Sensör")
 get_measurement = True
 def ultrasonicsensors():
     print threading.currentThread().getName(), " starting.."

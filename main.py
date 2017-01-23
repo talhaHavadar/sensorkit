@@ -3,6 +3,8 @@ import socket
 import threading
 import RPi.GPIO as GPIO
 import time
+from sensorkit.Servo import TowerProMG995
+from sensorkit.UltrasonicHCSR04 import UltrasonicHCSR04
 
 
 class UDPServerHandler(socketserver.BaseRequestHandler):
@@ -10,17 +12,18 @@ class UDPServerHandler(socketserver.BaseRequestHandler):
     def setup(self):
         print("Client connected ", self.client_address)
         super(UDPServerHandler, self).setup()
-        self.server.add_client(self)
+
 
     def handle(self):
+        self.server.add_client(self.client_address[0])
         data = self.request[0].strip().decode()
         socket = self.request[1]
         print(self.client_address[0],' wrote: ', data)
         command, value = str(data).split('|')
         print(command, command.strip(), command == 'steering')
         if command.strip() == 'steering':
-            print("steering", self.server.steering, " duty: ", self.server.calculate_steering_duty(value.strip()))
-            self.server.steering.ChangeDutyCycle(self.server.calculate_steering_duty(value.strip()))
+            print("steering", self.server.steering, " angle:",  int(value.strip()))
+            self.server.steering.angle = int(value.strip())
         socket.sendto(data.encode().upper(), (self.client_address[0], 7777))
 
 
@@ -34,20 +37,12 @@ class UDPServer(socketserver.ThreadingUDPServer):
         self.clients = set()
         GPIO.setmode(GPIO.BCM)
         print("Servo motor is setting up..")
-        GPIO.setup(18, GPIO.OUT)
-        self.steering = GPIO.PWM(18, 50)
-        self.steering.start(5)
-        GPIO.setwarnings(False)
-
-        duty = self.calculate_steering_duty(90)
-        print("initial duty: ", duty)
-        self.steering.ChangeDutyCycle(duty)
-        print("Servo motor is ready")
+        self.steering = TowerProMG995(18)
+        self.steering.setup()
+        self.distance_front = UltrasonicHCSR04(echo_pin=27, trig_pin=17, name="Front Ultrasonic")
         print("Server started")
-
-
-    def calculate_steering_duty(self, val):
-        return float(val) / 18.0 + 2.5
+        self.d_thread = DistanceThread(self)
+        self.d_thread.start()
 
     def add_client(self, client):
         """Registers a client to clients set"""
@@ -57,16 +52,32 @@ class UDPServer(socketserver.ThreadingUDPServer):
         """Sends data to all clients from the source"""
         for client in self.clients:
             if client is not source:
-                client.schedule((source.name, data))
+                self.socket.sendto(data.encode(), (client, 7777))
 
     def remove_client(self, client):
         """Removes clients from the set"""
         self.clients.remove(client)
 
+class DistanceThread(threading.Thread):
+    """docstring for DistanceThread."""
+    def __init__(self, server: UDPServer):
+        super(DistanceThread, self).__init__()
+        self.server = server
+
+    def run(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        while True:
+            dist = self.server.distance_front.getDistance()
+            print("dist_front|" + str(dist))
+            s.sendto(("dist_front|" + str(dist)).encode(), ('192.168.1.255', 7777))
+            time.sleep(.5)
 
 
 if __name__ == '__main__':
     HOST, PORT = "192.168.1.1", 7777
     server = UDPServer((HOST,PORT), UDPServerHandler)
-    server.serve_forever()
-    GPIO.cleanup()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        GPIO.cleanup()

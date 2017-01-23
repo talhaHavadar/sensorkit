@@ -38,7 +38,7 @@ class TowerProMG995(BaseServo):
         super(TowerProMG995, self).__init__(data_pin=data_pin, frequency=50)
         self.name = name
 
-    def setup(initial_angle = 0):
+    def setup(self, initial_angle = 0):
         """Initializes the servo."""
         print("%s setting up.." % (self.name))
         io.setup(self.data_pin, io.OUT)
@@ -58,7 +58,7 @@ class TowerProMG995(BaseServo):
             raise RuntimeError("Servo is not ready! Please be sure about you called the setup method of class before.")
         if value > 180 or value < 0:
             raise ValueError("Angle value must be between 0 and 180")
-        if isinstance(value, int):
+        if not isinstance(value, int):
             raise TypeError("Angle must be integer.")
         if self.angle_controller is None:
             raise ValueError("angle_controller is None. Please be sure you called setup method.")

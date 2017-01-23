@@ -1,6 +1,5 @@
 from RPi import GPIO as io
 import time
-from exceptions.InvalidValueError import InvalidValueError
 
 class UltrasonicHCSR04(object):
     """docstring for UltrasonicHCSR04."""
@@ -15,13 +14,13 @@ class UltrasonicHCSR04(object):
 
 
     def __setup(self):
-        print "[-] %s is setting up.." % (self.name)
+        print("[-] %s is setting up.." % (self.name))
         io.setmode(io.BCM)
         io.setup(self.trig_pin, io.OUT, initial = io.LOW)
         io.setup(self.echo_pin, io.IN)
         time.sleep(2)
         self.is_ready = True
-        print "[-] Setup completed."
+        print("[-] Setup completed.")
 
     def getDistance(self, distance_unit = "cm"):
         if distance_unit == "cm":
@@ -36,10 +35,10 @@ class UltrasonicHCSR04(object):
 
     def getDistanceAvg(self, distance_unit = "cm", measurement_number = 5, sleep = .2):
         if sleep < .2:
-            raise InvalidValueError("sleep must be bigger than 0.2")
+            raise ValueError("sleep must be bigger than 0.2")
         measurement_number = int(measurement_number)
         if measurement_number == 0:
-            raise InvalidValueError("measurement_number must be bigger than 0")
+            raise ValueError("measurement_number must be bigger than 0")
         measurements = list()
         for i in range(measurement_number):
             measurements.append(self.getDistance(distance_unit))
@@ -58,6 +57,8 @@ class UltrasonicHCSR04(object):
     def __getDistance(self):
         if not self.is_ready:
             self.__setup()
+        start_time = -1
+        end_time = -1
         io.output(self.trig_pin, True)
         time.sleep(0.00001) # wait for 10uS
         io.output(self.trig_pin, False) # now ultrasonic sensor sends the sound so we need to listen echo pin's value
