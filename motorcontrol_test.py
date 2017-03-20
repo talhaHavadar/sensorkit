@@ -1,5 +1,27 @@
 from RPi import GPIO as io
 from sensorkit.UltrasonicHCSR04 import UltrasonicHCSR04
+from sensorkit.MotorControl_L298N import MotorControl_L298N
+
+
+mcontrol = MotorControl_L298N(input_pin0=17, input_pin1=27, enable_pin=22)
+
+while(True):
+    command = raw_input("Give a command(up, down, stop, forward, backward): ")
+    if command == "up":
+        mcontrol.setSpeed(100)
+    elif command == "down":
+        mcontrol.setSpeed(50)
+    elif command == "forward":
+        mcontrol.forward()
+    elif command == "backward":
+        mcontrol.backward()
+    elif command == "stop":
+        mcontrol.stop()
+        break;
+
+mcontrol.cleanup()
+
+"""
 import time
 import threading
 
@@ -37,3 +59,5 @@ while(True):
 
 pwm.stop()
 io.cleanup()
+
+"""

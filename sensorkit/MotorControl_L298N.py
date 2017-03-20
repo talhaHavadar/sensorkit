@@ -1,4 +1,5 @@
 from RPi import GPIO as io
+import time
 
 class MotorControl_L298N(object):
 
@@ -10,7 +11,7 @@ class MotorControl_L298N(object):
         self.name = name
         self.duty_cycle = duty_cycle
         self.pwm_frequency = pwm_frequency
-
+        self.__setup();
 
     def __setup(self):
         print "[-] %s is setting up.." %(self.name)
@@ -29,20 +30,38 @@ class MotorControl_L298N(object):
         self.pwm.ChangeDutyCycle(self.duty_cycle)
 
     def setSpeed(self, speed):
-        if(speed <= 100 && speed >0):
+        if not self.is_ready:
+            self.__setup()
+
+        if(speed <= 100 and speed >0):
             self.__setDutyCycle(speed)
         elif(speed > 100):
             print("speed value undefined")
             return -1
 
-    def getForward(self):
+    def forward(self, speed = None):
+        if not self.is_ready:
+            self.__setup()
+        if speed is not None:
+            self.setSpeed(speed)
+
         io.output(self.input_pin0, True)
         io.output(self.input_pin1, False)
 
-    def getBackward(self):
+    def backward(self, speed = None):
+        if not self.is_ready:
+            self.__setup()
+        if speed is not None:
+            self.setSpeed(speed)
+
         io.output(self.input_pin0, False)
         io.output(self.input_pin1, True)
 
     def stop(self):
         io.output(self.input_pin0, False)
-        io.output(self.input_pin1, False)    
+        io.output(self.input_pin1, False)
+
+    def cleanup(self):
+        io.cleanup((self.input_pin0, self.input_pin1, self.enable_pin))
+        self.pwm.stop()
+        self.is_ready = False
