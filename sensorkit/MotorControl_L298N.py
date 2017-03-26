@@ -14,7 +14,7 @@ class MotorControl_L298N(object):
         self.__setup();
 
     def __setup(self):
-        print "[-] %s is setting up.." %(self.name)
+        print("[-] %s is setting up.." %(self.name))
         io.setmode(io.BCM)
         io.setup(self.input_pin0, io.OUT, initial = io.LOW)
         io.setup(self.input_pin1, io.OUT, initial = io.LOW)
@@ -23,7 +23,7 @@ class MotorControl_L298N(object):
         self.pwm.start(self.duty_cycle)
         time.sleep(2)
         self.is_ready = True
-        print "[-] Setup completed"
+        print("[-] Setup completed")
 
     def __setDutyCycle(self, duty_cycle):
         self.duty_cycle = duty_cycle
