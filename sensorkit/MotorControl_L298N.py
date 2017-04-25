@@ -33,7 +33,7 @@ class MotorControl_L298N(object):
         if not self.is_ready:
             self.__setup()
 
-        if(speed <= 100 and speed >0):
+        if(speed <= 100 and speed >= 0):
             self.__setDutyCycle(speed)
         elif(speed > 100):
             print("speed value undefined")
